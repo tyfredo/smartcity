@@ -7,7 +7,7 @@ const loginBtn = document.getElementById('loginBtn')
 
 observeAuth((user)=>{
     if(user){
-        window.location.href = './../../dashboard.html'
+        window.location.href = 'dashboard.html'
     }
 })
 

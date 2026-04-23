@@ -11,7 +11,7 @@
     serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
     import{auth,db} from "./firebase-config.js"
-import { use } from "react";
+
 
 export function showAlert(elementId, message){
     const alert = document.getElementById(elementId);
