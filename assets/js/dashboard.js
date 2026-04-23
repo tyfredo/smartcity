@@ -9,7 +9,7 @@ const logoutBtn = document.getElementById('logoutBtn')
 
 observeAuth(async(user)=>{
     if(!user){
-        window.location.href='./.././login.html'
+        window.location.href='./../../login.html'
         return
     }
     const profile = await getCurrentUserProfile(user.uid)
@@ -19,12 +19,12 @@ observeAuth(async(user)=>{
     const resolvedCity = profile?.favoriteCity || 'No Added'
 
     userName.textContent = resolvedName
-    navUserName.textContent = resolvedName
-    userEmail.textContent = resolvedEmail
-    favoriteCity.textContent = resolvedCity
+  //  navUserName.textContent = resolvedName
+  //  userEmail.textContent = resolvedEmail
+  //  favoriteCity.textContent = resolvedCity
 })
 
 logoutBtn?.addEventListener('click', async()=>{
     await logoutUser()
-    window.location.href='./.././login.html'
+    window.location.href='./../../login.html'
 })
