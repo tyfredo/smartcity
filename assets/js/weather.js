@@ -157,6 +157,9 @@ export async function fetchCurrentWeather(latitude, longitude) {
 export async function getCityWeather(cityName) {
   const location = await geocodeCity(cityName);
   const current = await fetchCurrentWeather(location.latitude, location.longitude);
+  console.log('Data => ',{
+    location, current
+  })
 
   return {
     location,
