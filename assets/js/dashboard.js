@@ -1,4 +1,4 @@
-import { observeAuth,logoutUser,getCurrentUserProfile } from "./auth.js"
+import { observeAuth, logoutUser, getCurrentUserProfile, updateCurrentUserProfile, hideAlert, setButtonLoading, showAlert } from "./auth.js"
 // Import nuevo fase 3
 import { getCityWeather, formatWeatherUpdateTime } from "./weather.js"
 
@@ -23,9 +23,26 @@ const weatherCoords = document.getElementById('weatherCoords')
 const weatherUpdatedAt = document.getElementById('weatherUpdatedAt')
 const weatherIcon = document.getElementById('weatherIcon')
 
+// constantes para el perfil
+const editProfileForm = document.getElementById('editProfileForm')
+const editName = document.getElementById('editName')
+const editEmail = document.getElementById('editEmail')
+const editCity = document.getElementById('editCity')
+const editProfileBtn = document.getElementById('editProfileBtn')
+
+const editProfileModalElement = document.getElementById('editProfileModal')
+const editProfileModal = editProfileModalElement? bootstrap.Modal.getOrCreateInstance(editProfileModalElement) : null
+
+const saveProfileBtn = document.getElementById('saveProfileBtn')
 
 // funciones de clima
 let currentFavoriteCity = ''
+//variables de usuario 
+let currentUser=null
+let currentProfile=null
+let userLogged
+
+
 const showWeatherAlert = message =>{
     weatherAlert.textContent = message
     weatherAlert.classList.remove('d-none')
@@ -77,6 +94,35 @@ const renderWeather = weatherData =>{
     showWeatherContent()
 }
 
+const renderProfile = (user, profile) => {
+    const resolvedName = profile?.name || user.email?.split('@')[0] || 'Usuario'
+    const resolvedEmail = profile?.email || user.email || '-'
+    const resolvedCity = profile?.favoriteCity?.trim() || ''
+
+    userName.textContent = resolvedName
+    navUserName.textContent = resolvedName
+    userEmail.textContent = resolvedEmail
+    favoriteCity.textContent = resolvedCity || 'No definida'
+
+    editName.value = resolvedName
+    editEmail.value = resolvedEmail
+    editCity.value = resolvedCity
+
+    currentFavoriteCity = resolvedCity
+
+}
+
+const reloadProfileAndWeather = async() =>{
+    if(!currentUser) return
+
+    const profile = await getCurrentUserProfile(currentUser.uid)
+    currentProfile = profile
+    renderProfile(currentUser, profile)
+    await loadWeather(currentFavoriteCity)
+}
+
+
+
 
 const loadWeather = async (city) =>{
     if (!city){
@@ -110,17 +156,10 @@ observeAuth(async(user)=>{
     }
 
     try {
+        currentUser = user
         const profile = await getCurrentUserProfile(user.uid)
-        const resolvedName = profile?.name || user.email?.split('@')[0] || 'Usuario'
-        const resolvedEmail = profile?.email || user.email || '--'
-        const resolvedCity = profile?.favoriteCity?.trim() || 'No Added'
-
-        userName.textContent = resolvedName
-        navUserName.textContent = resolvedName
-        userEmail.textContent = resolvedEmail
-        favoriteCity.textContent = resolvedCity
-
-        currentFavoriteCity = resolvedCity
+        currentProfile = profile
+        renderProfile(user, profile)
 
         await loadWeather(currentFavoriteCity)
 
@@ -140,4 +179,50 @@ logoutBtn?.addEventListener('click', async()=>{
 
 refreshWeatherBtn?.addEventListener('click', async()=>{
     await loadWeather(currentFavoriteCity)
+})
+
+editProfileForm?.addEventListener('submit', async(event)=>{
+    event.preventDefault()
+
+    hideAlert('profileAlert')
+    hideAlert('profileSuccess')
+
+    const name = editName.value.trim()
+    const city = editCity.value.trim()
+
+    if (!name){
+        showAlert('profileAlert', 'El nombre es obligatorio')
+    }
+
+    if (!city){
+        showAlert('profileAlert', 'La ciudad es obligatoria')
+    }
+
+    try {
+        setButtonLoading(
+            saveProfileBtn,
+            true,
+            '<i class="bi bi-check-circle m-2" ></i> Guardar Cambios', 'Guardando...'
+        )
+        await updateCurrentUserProfile(currentUser.uid, {
+            name,
+            favoriteCity: city
+        })
+
+        showAlert('profileSuccess', 'Perfil actualizado')
+        await reloadProfileAndWeather()
+        setTimeout(() => {
+            editProfileModal?.hide()
+            hideAlert('profileSuccess')
+        },15000)
+
+    } catch (error) {
+        showAlert('profileAlert',error.message || 'No se pudo actualizar')
+    }finally{
+        setButtonLoading(
+            saveProfileBtn,
+            false,
+            '<i class="bi bi-check-circle m-2" ></i> Guardar Cambios'
+        )
+    }
 })
